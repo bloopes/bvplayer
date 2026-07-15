@@ -2,9 +2,9 @@
 //!
 //! 将 B 站视频流的 m4s 分片下载到系统临时目录，
 //! 避开 Tauri 文件监听器对项目目录的变更检测。
+use std::fs;
 use std::path::PathBuf;
 use tokio::io::AsyncWriteExt;
-use std::fs;
 
 /// 获取缓存根目录（系统临时文件夹下的 `bvplayer_cache`）。
 ///
@@ -24,7 +24,10 @@ pub fn get_cache_dir() -> PathBuf {
 ///
 /// 命名规则：`{BV号}_{CID}.m4s`，确保同一视频不同分片不会互相覆盖。
 pub fn get_cache_path(bvid: &str, cid: u64) -> String {
-    get_cache_dir().join(format!("{}_{}.m4s", bvid, cid)).to_string_lossy().to_string() 
+    get_cache_dir()
+        .join(format!("{}_{}.m4s", bvid, cid))
+        .to_string_lossy()
+        .to_string()
 }
 
 /// 检查指定分片是否已缓存到本地，避免重复下载。
@@ -46,20 +49,37 @@ pub fn is_cached(bvid: &str, cid: u64) -> bool {
 /// # 返回值
 /// - `Ok(String)`: 缓存文件的本地完整路径
 /// - `Err(String)`: 下载或写入失败的错误描述
-pub async fn stream_to_disk(client: &reqwest::Client, url: &str, bvid: &str, cid: u64) -> Result<String, String> {
+pub async fn stream_to_disk(
+    client: &reqwest::Client,
+    url: &str,
+    bvid: &str,
+    cid: u64,
+) -> Result<String, String> {
     let path = get_cache_path(bvid, cid);
-    if is_cached(bvid, cid) { return Ok(path); }
+    if is_cached(bvid, cid) {
+        return Ok(path);
+    }
 
-    let response = client.get(url)
+    let response = client
+        .get(url)
         // B 站 CDN 会校验 Referer 和 UA 头，缺少任一个都会返回 403 Forbidden
         .header("Referer", "https://www.bilibili.com")
-        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-        .send().await.map_err(|e| e.to_string())?;
+        .header(
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        )
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
 
     let bytes = response.bytes().await.map_err(|e| e.to_string())?;
 
-    let mut file = tokio::fs::File::create(&path).await.map_err(|e| format!("缓存创建失败: {}", e))?;
-    file.write_all(&bytes).await.map_err(|e| format!("缓存写入失败: {}", e))?;
+    let mut file = tokio::fs::File::create(&path)
+        .await
+        .map_err(|e| format!("缓存创建失败: {}", e))?;
+    file.write_all(&bytes)
+        .await
+        .map_err(|e| format!("缓存写入失败: {}", e))?;
 
     Ok(path)
 }

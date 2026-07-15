@@ -1,0 +1,115 @@
+/**
+ * bvplayer 全局样式表。
+ *
+ * 负责三件事：
+ * 1. 清除浏览器默认边距，确保 Tauri WebView 全窗口铺满
+ * 2. 设置 Catppuccin Mocha 暗黑配色基准（#11111b 底色 / #cdd6f4 文字）
+ * 3. 统一 WebKit 滚动条暗黑样式，避免 Windows 下出现亮色原生滚动条
+ *
+ * 所有组件级样式均在 App.vue 的 `<style scoped>` 中管理，
+ * 此文件仅包含影响 #app 根容器和浏览器层级的全局规则。
+ */
+
+/* 全局重置：消除浏览器默认边距，system-ui 字体栈确保在各平台呈现原生桌面质感 */
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* 抗锯齿：避免深色背景上浅色文字出现彩色边缘 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #11111b;
+  color: #cdd6f4;
+}
+/* 1. 全局禁用文本选中：彻底消除选中的蓝色背景 */
+body {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none; /* 顺便禁用元素的拖拽选中文本行为 */
+}
+
+/* 2. 关键补丁：必须为输入框单独放开权限[cite: 3] */
+/* 如果不加这一行，你的搜索框和BV号输入框将无法选中文字进行删除或复制 */
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* WebKit 滚动条暗黑样式：覆盖 Windows 下默认的亮色滚动条，匹配 Catppuccin Mocha 主题 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #313244;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #45475a;
+}
+
+/* 引入毛玻璃质感：给所有浮动元素统一配置 */
+.main-viewport, .app-container {
+  /* 增加亮部对比，光影更自然 */
+  background: radial-gradient(circle at 50% 120%, #1a1a4a, #05051a) !important;
+}
+
+/* 给卡片增加深色阴影，让它看起来像悬浮在深邃背景上 */
+.pl-card {
+  /* 降低一点透明度，让玻璃感更通透 */
+  background: rgba(255, 255, 255, 0.02) !important;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.track-item {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.pl-card:hover {
+  background: rgba(137, 180, 250, 0.08);
+  border-color: rgba(137, 180, 250, 0.3);
+  transform: translateY(-4px);
+}
+
+.pl-card:active {
+  transform: scale(0.98);
+  border-color: #89b4fa;
+}
+
+/* 1. 彻底优化进度条样式 */
+.progress-bar-fill {
+  /* 使用从海蓝到冷白的弱渐变，降低饱和度 */
+  background: linear-gradient(90deg, #4ea3ff, #8ae9ff) !important;
+  /* 降低光晕强度，改为内敛的深色投影 */
+  box-shadow: 0 0 12px rgba(78, 163, 255, 0.3) !important;
+  height: 4px !important; /* 稍微调细一点，避免臃肿感 */
+  border-radius: 2px;
+  transition: width 0.1s linear;
+  opacity: 0.8; /* 增加一点透明度，让它看起来像底色的深处透出的光 */
+}
+
+/* 2. 进度条容器：改为更暗的底色，作为深邃背景的“槽位” */
+.progress-bar-container {
+  background: rgba(0, 0, 0, 0.4) !important; 
+  border-radius: 4px;
+}
+
+.app-container {
+  animation: fadeIn 0.5s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.btn-icon:active {
+  transform: scale(0.9);
+}

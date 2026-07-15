@@ -1,11 +1,6 @@
-/**
- * bvplayer 前端入口。
- *
- * 挂载 Vue 3 根组件到 `#app`，并加载全局样式。
- * 所有 IPC 通信、状态管理和业务逻辑均在 App.vue 中内聚。
- */
-import { createApp } from "vue";
-import App from "./App.vue";
-import "./style.css";
+import { createApp } from 'vue';
+import './assets/global.css'; // 确保你已将 style.css 移至此处
+import App from './App.vue';
 
-createApp(App).mount("#app");
+document.addEventListener('contextmenu', event => event.preventDefault());
+createApp(App).mount('#app');
