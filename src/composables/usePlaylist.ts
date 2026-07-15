@@ -23,6 +23,27 @@ export function usePlaylist() {
     localStorage.setItem('b-player-database', JSON.stringify(allPlaylists.value));
   };
 
+  // 📍 专用的备份恢复函数，安全处理指针解绑问题
+  const restoreDatabase = (parsedBackup: Record<string, PlaylistMeta>) => {
+    // 1. 替换总数据源
+    allPlaylists.value = parsedBackup;
+
+    // 2. 检查当前激活的歌单ID在备份中是否存在，不存在则回退到 default 或第一个歌单
+    if (!allPlaylists.value[activePlaylistId.value]) {
+      activePlaylistId.value = Object.keys(parsedBackup)[0] || 'default';
+    }
+
+    // 3. 极其关键：立刻将前端的 playlist 指针重定向到新导入的数组上！
+    if (allPlaylists.value[activePlaylistId.value]) {
+      playlist.value = allPlaylists.value[activePlaylistId.value].songs;
+    } else {
+      playlist.value = [];
+    }
+
+    // 4. 保存到本地存储
+    saveDatabase();
+  };
+
   const initPersistence = () => {
     if (isPersistenceInitialized) return;
 
@@ -88,7 +109,7 @@ export function usePlaylist() {
   };
 
   return {
-    allPlaylists, activePlaylistId, playlist, currentIndex,
+    allPlaylists, activePlaylistId, playlist, currentIndex,restoreDatabase,
     initPersistence, saveDatabase, clearAllData, nextSong, prevSong
   };
 }

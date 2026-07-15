@@ -6,7 +6,7 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { usePlaylist } from '../../composables/usePlaylist';
 import { useToast } from '../../composables/useToast';
 
-const { allPlaylists, saveDatabase } = usePlaylist();
+const { allPlaylists, saveDatabase, restoreDatabase } = usePlaylist();
 const { showToast } = useToast();
 
 // 📍 1. 弹窗状态管理
@@ -71,14 +71,31 @@ function onImportFileSelected(event: Event) {
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
-      const parsedData = JSON.parse(e.target?.result as string);
+      // 1. 获取原始的 JSON 字符串
+      let rawText = e.target?.result as string;
+
+      // 📍 数据清洗核心：全局扫描并替换掉带空格的非法键名
+      // 这样即便你导入的是以前带有 "cover url" 的错误备份文件，也能被热修复
+      rawText = rawText.replace(/"cover url"\s*:/g, '"cover_url":');
+      rawText = rawText.replace(/"audio url"\s*:/g, '"audio_url":');
+
+      // 2. 解析清洗后的干净数据
+      const parsedData = JSON.parse(rawText);
       if (!parsedData || !parsedData['default']) throw new Error("无效格式");
       
-      allPlaylists.value = parsedData;
-      saveDatabase();
+      // 📍 指针解绑核心：调用我们新写的安全恢复函数，而不是直接赋值！
+      if (restoreDatabase) {
+        restoreDatabase(parsedData);
+      } else {
+        // Fallback 防御，万一忘了导出
+        allPlaylists.value = parsedData;
+        saveDatabase();
+      }
+
       showToast("✅ 数据恢复成功！", "success");
       showSettingsModal.value = false;
     } catch (error) {
+      console.error("Backup Parse Error:", error);
       showToast("❌ 导入失败：文件格式错误。", "error");
     } finally {
       input.value = "";
