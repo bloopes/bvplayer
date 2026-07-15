@@ -1,0 +1,32 @@
+[package]
+name = "bvplayer"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2021"
+
+# 📍 核心修复区：这就是 build.rs 正在疯狂寻找的编译依赖
+[build-dependencies]
+tauri-build = { version = "2.0.0", features = [] }
+
+[dependencies]
+# Tauri v2 核心引擎
+tauri = { version = "2.11.3", features = ["tray-icon"] }
+tauri-plugin-dialog = "2.0.0" # 📍 添加官方原生弹窗插件
+
+# 我们自己手搓的纯后端驱动
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+reqwest = { version = "0.12", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
+rodio = "0.17"
+thiserror = "1.0"
+rand = "0.8"
+
+# 针对最终发布版本（Release）的极限体积/内存压榨配置
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = false        # 📍 关掉极限链接优化，保全底层声卡驱动
+opt-level = "s"
+strip = true
